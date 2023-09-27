@@ -1,61 +1,44 @@
 import socket
-
 from pyModbusTCP.server import ModbusServer
-
 import random
-
 import time
 
-hostname = socket.gethostname()    
-
+hostname = socket.gethostname()
 server_ip_address = socket.gethostbyname(hostname)
-
 server_port = 502
 
 print(f"[+]Info : IP Address for Modbus Server : {server_ip_address}")
 
- 
-
 server = ModbusServer(server_ip_address, server_port, no_block=True)
-
 server.start()
 
- 
+print(f"[+]info : Server is Online on IP : {server_ip_address} and PORT : {server_port}")
 
-print(f"[+]info : Server is Online on IP : {server_ip_address} and PORT : {server_port} ")
+# Define register names and initialize values
+register_names = {
+    0: "Energy Consumption",
+    1: "Voltage",
+    2: "Current",
+    3: "Power"
+}
 
- 
-
- 
+register_values = {register: 0 for register in register_names}
 
 try:
-
     while True:
-
-        energy_consumption=random.randint(0, 100)
-
-        voltage = random.randint(0, 100)
-
-        current = random.randint(50, 200)
-
-        power = random.randint(90,500 )
-
-        # print(f"{temperature} and {pressure}")
+        # Generate random values for registers
+        for register in register_values:
+            register_values[register] = random.randint(0, 100) if register != 2 else random.randint(50, 200)
 
         # Update holding registers
+        for register, value in register_values.items():
+            server.data_bank.set_holding_registers(register, [value])
 
-        server.data_bank.set_holding_registers(0, [energy_consumption])
+        # Print register names and values
+        for register, value in register_values.items():
+            print(f"{register_names.get(register)}: {value}")
 
-        server.data_bank.set_holding_registers(1, [voltage])
-
-        server.data_bank.set_holding_registers(2, [current])
-
-        server.data_bank.set_holding_registers(3, [power])
-
-        print(server.data_bank.get_holding_registers(0,4))
-
-        time.sleep(2) # You can add other code here if needed
+        time.sleep(2)  # You can add other code here if needed
 
 except KeyboardInterrupt:
-
     server.stop()
