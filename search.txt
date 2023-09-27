@@ -1,0 +1,61 @@
+import socket
+
+from pyModbusTCP.server import ModbusServer
+
+import random
+
+import time
+
+hostname = socket.gethostname()    
+
+server_ip_address = socket.gethostbyname(hostname)
+
+server_port = 502
+
+print(f"[+]Info : IP Address for Modbus Server : {server_ip_address}")
+
+ 
+
+server = ModbusServer(server_ip_address, server_port, no_block=True)
+
+server.start()
+
+ 
+
+print(f"[+]info : Server is Online on IP : {server_ip_address} and PORT : {server_port} ")
+
+ 
+
+ 
+
+try:
+
+    while True:
+
+        energy_consumption=random.randint(0, 100)
+
+        voltage = random.randint(0, 100)
+
+        current = random.randint(50, 200)
+
+        power = random.randint(90,500 )
+
+        # print(f"{temperature} and {pressure}")
+
+        # Update holding registers
+
+        server.data_bank.set_holding_registers(0, [energy_consumption])
+
+        server.data_bank.set_holding_registers(1, [voltage])
+
+        server.data_bank.set_holding_registers(2, [current])
+
+        server.data_bank.set_holding_registers(3, [power])
+
+        print(server.data_bank.get_holding_registers(0,4))
+
+        time.sleep(2) # You can add other code here if needed
+
+except KeyboardInterrupt:
+
+    server.stop()
