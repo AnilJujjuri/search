@@ -39,18 +39,18 @@ def browse_and_collect(node, telemetry_data):
     try:
         # Browse all children of the current node
         for child_node in node.get_children():
-            # Get the NodeId of the current node
-            node_id = child_node.nodeid
-
-            # Read the value of the current node
-            value = child_node.get_value()
-            telemetry_data[str(node_id)] = value
+            try:
+                # Read the value of the current node
+                value = child_node.get_value()
+                telemetry_data[child_node.nodeid.to_string()] = value
+            except Exception as e:
+                print(f"Error reading node {child_node.nodeid.to_string()}: {str(e)}")
 
             # Recursively browse child nodes
             browse_and_collect(child_node, telemetry_data)
 
     except Exception as e:
-        print(f"Error reading node: {str(e)}")
+        print(f"Error browsing node {node.nodeid.to_string()}: {str(e)}")
 
 def send_to_iothub(telemetry_data):
     # Azure IoT Hub connection settings
