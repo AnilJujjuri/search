@@ -39,11 +39,8 @@ def browse_and_collect(node, telemetry_data):
     try:
         # Browse all children of the current node
         for child_node in node.get_children():
-            node_id = child_node.get_node_id()
-
-            if node_id.IdentifierType == ua.NodeIdType.String:
-                # Ignore nodes with string-based Identifiers
-                continue
+            # Get the NodeId of the current node
+            node_id = child_node.nodeid
 
             # Read the value of the current node
             value = child_node.get_value()
