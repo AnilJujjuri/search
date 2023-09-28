@@ -1,44 +1,149 @@
-import socket
-from pyModbusTCP.server import ModbusServer
-import random
 import time
 
-hostname = socket.gethostname()
-server_ip_address = socket.gethostbyname(hostname)
-server_port = 502
+from opcua import Client
 
-print(f"[+]Info : IP Address for Modbus Server : {server_ip_address}")
+from azure.iot.device import IoTHubModuleClient
 
-server = ModbusServer(server_ip_address, server_port, no_block=True)
-server.start()
+ 
 
-print(f"[+]info : Server is Online on IP : {server_ip_address} and PORT : {server_port}")
+# OPC UA connection settings
 
-# Define register names and initialize values
-register_names = {
-    0: "Energy Consumption",
-    1: "Voltage",
-    2: "Current",
-    3: "Power"
-}
+endpoint_url = "opc.tcp://MYTSL02946.lnties.com:53530/OPCUA/SimulationServer"
 
-register_values = {register: 0 for register in register_names}
+ 
 
-try:
-    while True:
-        # Generate random values for registers
-        for register in register_values:
-            register_values[register] = random.randint(0, 100) if register != 2 else random.randint(50, 200)
+# Telemetry collection interval in seconds
 
-        # Update holding registers
-        for register, value in register_values.items():
-            server.data_bank.set_holding_registers(register, [value])
+telemetry_interval = 1
 
-        # Print register names and values
-        for register, value in register_values.items():
-            print(f"{register_names.get(register)}: {value}")
+ 
 
-        time.sleep(2)  # You can add other code here if needed
+ 
 
-except KeyboardInterrupt:
-    server.stop()
+# Function to collect telemetry data from OPC UA server
+
+def collect_telemetry(client, node_ids):
+
+    client.connect()
+
+    print("Connected!")
+
+ 
+
+    try:
+
+        while True:
+
+ 
+
+            # Collect telemetry data for each node
+
+            telemetry_data = {}
+
+            for node_id in node_ids:
+
+                node = client.get_node(node_id)
+
+                value = node.get_value()
+
+                #telemetry_data[node_id] = value
+
+                properties = node.get_properties()
+
+                if properties:
+
+                    for prop in properties:
+
+                        prop_name = prop.get_browse_name().to_string().split(":")[-1]
+
+                        prop_value = prop.get_value()
+
+                        telemetry_data[prop_name] = prop_value
+
+ 
+
+            # Print telemetry data to the console
+
+            # print("Telemetry Data:", telemetry_data)
+
+            send_to_iothub(telemetry_data)
+
+            # Process telemetry data here (e.g., send to cloud)
+
+ 
+
+            time.sleep(telemetry_interval)
+
+    except KeyboardInterrupt:
+
+        print("Telemetry collection stopped.")
+
+    finally:
+
+        client.disconnect()
+
+        print("Disconnected!")
+
+def send_to_iothub(telemtry_data):
+
+    CONNECTION_STRING = "HostName=vanderlende-hub-dev-001.azure-devices.net;DeviceId=edgedevice001;SharedAccessKey=FSN1nETL1Ev16oetrlMAFUNIR68WN5n1q8G98ziCnz4="
+
+    try:
+
+        module_client = IoTHubModuleClient.create_from_connection_string(CONNECTION_STRING)
+
+        module_client.connect()
+
+        print("Connected to Azure IoT Hub")
+
+        twin={"properties":telemtry_data}
+
+        module_client.patch_twin_reported_properties(twin)
+
+        # module_client.send_message_to_output(data, "output1")
+
+        print("Message sent to IoT Hub",twin)
+
+ 
+
+        module_client.disconnect()
+
+        print("Disconnected from Azure IoT Hub")
+
+    except Exception as e:
+
+        print("Error sending data to IoT Hub:", str(e))
+
+if __name__ == "__main__":
+
+    # Define OPC UA nodes to read data from
+
+    # Replace the node_ids with the actual node ids you want to read from
+
+    node_ids = [
+
+        "ns=3;i=1003",
+
+ 
+
+    ]
+
+ 
+
+    # Create OPC UA client
+
+    client = Client(endpoint_url)
+
+ 
+
+    try:
+
+        # Start telemetry data collection
+
+        collect_telemetry(client, node_ids)
+
+ 
+
+    except KeyboardInterrupt:
+
+        print("Telemetry collection stopped.")
