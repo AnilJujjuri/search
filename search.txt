@@ -8,9 +8,12 @@ endpoint_url = "opc.tcp://MYTSL02946.lnties.com:53530/OPCUA/SimulationServer"
 # Telemetry collection interval in seconds
 telemetry_interval = 1
 
-# Namespace and browse path for the desired nodes
-desired_ns = 3
-desired_path = "85/0:Simulation"
+# Namespace and identifier for the desired object
+desired_ns = 0  # Use the appropriate namespace index for your server
+desired_i = 85
+
+# Object name you are looking for
+desired_object_name = "Simulation"
 
 # Function to collect telemetry data from OPC UA server
 def collect_telemetry(client):
@@ -19,18 +22,23 @@ def collect_telemetry(client):
 
     try:
         while True:
-            # Collect telemetry data for each node dynamically
+            # Collect telemetry data for the desired object
             telemetry_data = {}
 
             # Browse the server's address space
             root_node = client.get_root_node()
             objects_node = root_node.get_child(["0:Objects"])
 
-            # Recursively discover nodes and their values, filtering by namespace and path
-            browse_and_collect(objects_node, telemetry_data, desired_ns, desired_path)
+            # Find the object with i=85
+            target_object = find_object_by_id(objects_node, desired_ns, desired_i)
 
-            # Print telemetry data to the console
-            send_to_iothub(telemetry_data)
+            if target_object:
+                # Browse and collect nodes under the Simulation object
+                browse_and_collect(target_object, telemetry_data)
+
+                # Print telemetry data to the console
+                send_to_iothub(telemetry_data)
+
             time.sleep(telemetry_interval)
 
     except KeyboardInterrupt:
@@ -39,20 +47,32 @@ def collect_telemetry(client):
         client.disconnect()
         print("Disconnected!")
 
-def browse_and_collect(node, telemetry_data, target_ns, target_path):
+def find_object_by_id(node, target_ns, target_i):
     try:
-        # Browse all children of the current node
+        for child_node in node.get_children():
+            if (
+                child_node.nodeid.NamespaceIndex == target_ns
+                and child_node.nodeid.Identifier == target_i
+            ):
+                return child_node
+            found_object = find_object_by_id(child_node, target_ns, target_i)
+            if found_object:
+                return found_object
+    except Exception as e:
+        print(f"Error finding object: {str(e)}")
+
+def browse_and_collect(node, telemetry_data):
+    try:
         for child_node in node.get_children():
             try:
-                # Check if the current node matches the desired namespace and path
-                if child_node.nodeid.NamespaceIndex == target_ns and child_node.get_browse_name().Name == target_path:
-                    value = child_node.get_value()
-                    telemetry_data[child_node.nodeid.to_string()] = value
+                # Read the value of the current node
+                value = child_node.get_value()
+                telemetry_data[child_node.nodeid.to_string()] = value
             except Exception as e:
                 print(f"Error reading node {child_node.nodeid.to_string()}: {str(e)}")
 
             # Recursively browse child nodes
-            browse_and_collect(child_node, telemetry_data, target_ns, target_path)
+            browse_and_collect(child_node, telemetry_data)
 
     except Exception as e:
         print(f"Error browsing node {node.nodeid.to_string()}: {str(e)}")
