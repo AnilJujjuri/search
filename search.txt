@@ -8,6 +8,9 @@ endpoint_url = "opc.tcp://MYTSL02946.lnties.com:53530/OPCUA/SimulationServer"
 # Telemetry collection interval in seconds
 telemetry_interval = 1
 
+# Specify the BrowseName of the object you want to fetch data from
+target_object_name = "MyTargetObject"
+
 # Function to collect telemetry data from OPC UA server
 def collect_telemetry(client):
     client.connect()
@@ -15,18 +18,21 @@ def collect_telemetry(client):
 
     try:
         while True:
-            # Collect telemetry data for each node dynamically
+            # Collect telemetry data for the specified object
             telemetry_data = {}
 
-            # Browse the server's address space
+            # Browse the server's address space to find the target object
             root_node = client.get_root_node()
             objects_node = root_node.get_child(["0:Objects"])
+            target_object = find_object_by_browse_name(objects_node, target_object_name)
 
-            # Recursively discover nodes and their values
-            browse_and_collect(objects_node, telemetry_data)
+            if target_object:
+                # Recursively discover nodes and their values under the target object
+                browse_and_collect(target_object, telemetry_data)
 
-            # Print telemetry data to the console
-            send_to_iothub(telemetry_data)
+                # Print telemetry data to the console
+                send_to_iothub(telemetry_data)
+
             time.sleep(telemetry_interval)
 
     except KeyboardInterrupt:
@@ -34,6 +40,22 @@ def collect_telemetry(client):
     finally:
         client.disconnect()
         print("Disconnected!")
+
+def find_object_by_browse_name(node, browse_name):
+    try:
+        # Browse all children of the current node
+        for child_node in node.get_children():
+            # Check if the current child node's BrowseName matches the target name
+            if child_node.get_browse_name().Name == browse_name:
+                return child_node
+            else:
+                # Recursively search for the target object under this child node
+                target_object = find_object_by_browse_name(child_node, browse_name)
+                if target_object:
+                    return target_object
+
+    except Exception as e:
+        print(f"Error searching for object: {str(e)}")
 
 def browse_and_collect(node, telemetry_data):
     try:
