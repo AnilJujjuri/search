@@ -8,12 +8,9 @@ endpoint_url = "opc.tcp://MYTSL02946.lnties.com:53530/OPCUA/SimulationServer"
 # Telemetry collection interval in seconds
 telemetry_interval = 1
 
-# Namespace and identifier for the desired object
-desired_ns = 0  # Use the appropriate namespace index for your server
+# Namespace and identifier for the "Simulation" object
+desired_ns = 3
 desired_i = 85
-
-# Object name you are looking for
-desired_object_name = "Simulation"
 
 # Function to collect telemetry data from OPC UA server
 def collect_telemetry(client):
@@ -22,19 +19,19 @@ def collect_telemetry(client):
 
     try:
         while True:
-            # Collect telemetry data for the desired object
+            # Collect telemetry data for all nodes under the "Simulation" object
             telemetry_data = {}
 
             # Browse the server's address space
             root_node = client.get_root_node()
             objects_node = root_node.get_child(["0:Objects"])
 
-            # Find the object with i=85
+            # Find the "Simulation" object
             target_object = find_object_by_id(objects_node, desired_ns, desired_i)
 
             if target_object:
-                # Browse and collect nodes under the Simulation object
-                browse_and_collect(target_object, telemetry_data)
+                # Browse and collect properties of nodes under the "Simulation" object
+                browse_and_collect_properties(target_object, telemetry_data)
 
                 # Print telemetry data to the console
                 send_to_iothub(telemetry_data)
@@ -61,8 +58,9 @@ def find_object_by_id(node, target_ns, target_i):
     except Exception as e:
         print(f"Error finding object: {str(e)}")
 
-def browse_and_collect(node, telemetry_data):
+def browse_and_collect_properties(node, telemetry_data):
     try:
+        # Browse all children of the current node
         for child_node in node.get_children():
             try:
                 # Read the value of the current node
@@ -72,7 +70,7 @@ def browse_and_collect(node, telemetry_data):
                 print(f"Error reading node {child_node.nodeid.to_string()}: {str(e)}")
 
             # Recursively browse child nodes
-            browse_and_collect(child_node, telemetry_data)
+            browse_and_collect_properties(child_node, telemetry_data)
 
     except Exception as e:
         print(f"Error browsing node {node.nodeid.to_string()}: {str(e)}")
