@@ -1,35 +1,35 @@
-Modbus RTU, like any communication protocol, has its challenges and limitations, especially in modern industrial automation settings. Here are some of the challenges and limitations associated with Modbus RTU:
+import time
+from opcua import Client
 
-1. **Speed and Bandwidth**: Modbus RTU uses serial communication, which is relatively slow compared to modern Ethernet-based protocols like Modbus TCP. This limitation can be a constraint in applications requiring high-speed data transfer.
+# OPC UA connection settings
+endpoint_url = "opc.tcp://MYTSL02946.lnties.com:53530/OPCUA/SimulationServer"
 
-2. **Distance**: Serial communication in Modbus RTU has limitations in terms of cable length, signal integrity, and noise immunity. Longer distances may require signal repeaters or converters.
+# Create OPC UA client
+client = Client(endpoint_url)
 
-3. **Scalability**: While Modbus RTU allows for multiple devices on a network, adding or removing devices can require manual configuration changes, making it less scalable in larger installations.
+try:
+    # Connect to the OPC UA server
+    client.connect()
+    print("Connected!")
 
-4. **Limited Address Space**: Modbus RTU has a limited address space, typically supporting up to 247 devices on a single RS-485 network. This limitation can be restrictive in large-scale systems.
+    # Get the root node
+    root = client.get_root_node()
 
-5. **Deterministic but Not Real-Time**: Modbus RTU is deterministic, meaning it ensures predictable communication timing. However, it doesn't guarantee real-time performance, which may be essential in some applications.
+    # Define a function to recursively browse and retrieve node information
+    def browse_and_print(node, indent=""):
+        # Print the current node's browse name and NodeId
+        print(f"{indent}Node Name: {node.get_browse_name().Name}, NodeId: {node.nodeid}")
 
-6. **Security**: Modbus RTU was designed in an era when industrial networks were more isolated and less connected to the internet. It lacks built-in security features, making it vulnerable to cybersecurity threats when used in modern networked environments.
+        # Recursively browse and print child nodes
+        for child_node in node.get_children():
+            browse_and_print(child_node, indent + "  ")
 
-7. **Complex Data Types**: While Modbus RTU can handle various data types, dealing with complex data structures, such as arrays or structures, can be challenging compared to more modern protocols.
+    # Call the browse_and_print function starting from the root node
+    browse_and_print(root)
 
-8. **Lack of Encryption**: Modbus RTU does not provide data encryption, which can expose sensitive information to eavesdropping.
+    # Disconnect from the OPC UA server
+    client.disconnect()
+    print("Disconnected!")
 
-9. **No Native IP Support**: Modbus RTU doesn't natively support IP-based networks, requiring the use of gateways or converters to communicate with Ethernet-based systems.
-
-10. **Limited Diagnostics**: The protocol provides basic error-checking mechanisms but lacks advanced diagnostic features, which can make troubleshooting complex issues challenging.
-
-11. **Compatibility**: Although Modbus RTU is widely used, compatibility between devices from different manufacturers can still be a concern, especially when implementing custom or non-standard features.
-
-12. **Master-Slave Architecture**: The master-slave architecture can lead to issues if the master fails or becomes overloaded, potentially disrupting communication with slave devices.
-
-13. **No Support for Broadcast**: Modbus RTU doesn't support broadcast messages, which can be limiting in certain scenarios where simultaneous communication with multiple devices is required.
-
-14. **Limited Data Throughput**: Due to its serial nature and the need for addressing and error checking, Modbus RTU has lower data throughput compared to Ethernet-based protocols.
-
-15. **Legacy Technology**: Modbus RTU is a legacy technology, and as such, it may lack some of the modern features and capabilities found in newer communication protocols.
-
-16. **Future Viability**: While still widely used, the industry is gradually shifting toward more modern and capable communication protocols, which may make Modbus RTU less suitable for new installations.
-
-It's essential to carefully consider these challenges and limitations when deciding whether to use Modbus RTU in a specific industrial automation application. Depending on your requirements, you might find that other protocols, such as Modbus TCP, EtherNet/IP, or OPC UA, better suit your needs, especially if you require higher performance, security, and scalability.
+except Exception as e:
+    print(f"Error: {str(e)}")
