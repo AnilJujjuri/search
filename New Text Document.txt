@@ -4,9 +4,6 @@ from opcua import Client
 # OPC UA connection settings
 endpoint_url = "opc.tcp://MYTSL02946.lnties.com:53530/OPCUA/SimulationServer"
 
-# Object identifier for your specific Object under which the devices are set
-object_identifier = "85"
-
 # Create OPC UA client
 client = Client(endpoint_url)
 
@@ -15,20 +12,30 @@ try:
     client.connect()
     print("Connected!")
 
-    # Browse and read child nodes under the Object with the specified identifier
-    objects_node = client.get_objects_node()
-    for child_node in objects_node.get_children():
-        # Check if the child node's identifier matches your specified Object identifier
-        if object_identifier in child_node.get_browse_name().Name:
-            # Now, you can read the child nodes under this Object
-            for device_node in child_node.get_children():
-                # Read the value of each child node (e.g., the devices)
-                value = device_node.get_value()
-                print(f"Node Name: {device_node.get_browse_name().Name}, NodeId: {device_node.nodeid}, Value: {value}")
+    # Specify the NodeId of the parent node you want to read
+    parent_node_id = "ns=3;s=85/0:Simulation"
+
+    # Get the parent node by NodeId
+    parent_node = client.get_node(parent_node_id)
+
+    # Create an empty list to store the NodeIds
+    node_ids = []
+
+    # Browse and read child nodes
+    for child_node in parent_node.get_children():
+        # Read the value of each child node
+        value = child_node.get_value()
+        print(f"Node Name: {child_node.get_browse_name().Name}, NodeId: {child_node.nodeid}, Value: {value}")
+        
+        # Append the NodeId to the list
+        node_ids.append(child_node.nodeid.to_string())
 
     # Disconnect from the OPC UA server
     client.disconnect()
     print("Disconnected!")
+
+    # Now, you have all the NodeIds in the 'node_ids' list
+    print("NodeIds of child nodes:", node_ids)
 
 except Exception as e:
     print(f"Error: {str(e)}")
