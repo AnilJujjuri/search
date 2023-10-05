@@ -12,20 +12,17 @@ try:
     client.connect()
     print("Connected!")
 
-    # Get the root node
-    root = client.get_root_node()
+    # Specify the NodeId of the parent node you want to read
+    parent_node_id = "ns=3;s=85/0:Simulation"
 
-    # Define a function to recursively browse and retrieve node information
-    def browse_and_print(node, indent=""):
-        # Print the current node's browse name and NodeId
-        print(f"{indent}Node Name: {node.get_browse_name().Name}, NodeId: {node.nodeid}")
+    # Get the parent node by NodeId
+    parent_node = client.get_node(parent_node_id)
 
-        # Recursively browse and print child nodes
-        for child_node in node.get_children():
-            browse_and_print(child_node, indent + "  ")
-
-    # Call the browse_and_print function starting from the root node
-    browse_and_print(root)
+    # Browse and read child nodes
+    for child_node in parent_node.get_children():
+        # Read the value of each child node
+        value = child_node.get_value()
+        print(f"Node Name: {child_node.get_browse_name().Name}, NodeId: {child_node.nodeid}, Value: {value}")
 
     # Disconnect from the OPC UA server
     client.disconnect()
