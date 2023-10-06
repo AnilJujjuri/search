@@ -100,6 +100,7 @@ except Exception as e:
 
 
 
+
 Connected!
 Device Node Name: Server, NodeId: FourByteNodeId(i=2253)
 Device Node Name: Aliases, NodeId: FourByteNodeId(i=23470)
