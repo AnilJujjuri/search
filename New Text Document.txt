@@ -69,16 +69,10 @@ try:
     telemetry_data = {}
 
     for node_id in device_node_id_with_ns_i:
-        value = node_id.get_value()
-        print(f"Node Name: {child_node.get_browse_name().Name}, NodeId: {node_id.nodeid}, Value: {value}")
-
-       
-
- 
-
-        # Print the child node name, node ID, and its value
-
-        print(f"Child Node Name: {node.get_browse_name().Name}, NodeId: {node.nodeid}, Value: {value}")
+        node=client.get_node(node_id)
+        for child_node in node.get_children():
+            value = child_node.get_value()
+            print(f"Node Name: {child_node.get_browse_name().Name}, NodeId: {child_node.nodeid}, Value: {value}")
 
  
 
@@ -97,16 +91,3 @@ try:
 except Exception as e:
 
     print(f"Error: {str(e)}")
-
-
-
-
-Connected!
-Device Node Name: Server, NodeId: FourByteNodeId(i=2253)
-Device Node Name: Aliases, NodeId: FourByteNodeId(i=23470)
-Device Node Name: EnergyMeter, NodeId: FourByteNodeId(ns=3;i=1011)
-Device Node Name: WeatherIndicator, NodeId: FourByteNodeId(ns=3;i=1012)
-Device Node Name: Simulation, NodeId: StringNodeId(ns=3;s=85/0:Simulation)
-Device Node Name: StaticData, NodeId: StringNodeId(ns=5;s=StaticData)
-Device Node Name: MyObjects, NodeId: StringNodeId(ns=6;s=MyObjectsFolder)
-Error: 'str' object has no attribute 'get_value'
