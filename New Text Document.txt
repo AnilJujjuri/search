@@ -1,62 +1,104 @@
-<<<<<<< HEAD
 import time
+
 from opcua import Client
 
+ 
+
 # OPC UA connection settings
+
 endpoint_url = "opc.tcp://MYTSL02946.lnties.com:53530/OPCUA/SimulationServer"
 
+ 
+
 # Create OPC UA client
+
 client = Client(endpoint_url)
-device_node_id=[]
+
+device_node_id = []
+
+device_node_id_with_ns_i = []
+
+device_node_id_without_ns_i = []
+
+ 
+
 try:
+
     # Connect to the OPC UA server
+
     client.connect()
+
     print("Connected!")
+
+ 
+
     objects_node_id = "ns=0;i=85"
+
     # Get the "Objects" folder node by NodeId
+
     objects_node = client.get_node(objects_node_id)
+
+ 
+
     # Browse and list all child nodes under the "Objects" folder
+
     for child_node in objects_node.get_children():
 
         print(f"Device Node Name: {child_node.get_browse_name().Name}, NodeId: {child_node.nodeid}")
+
         device_node_id.append(child_node.nodeid.to_string())
-    # Specify the NodeId of the parent node you want to read
-    parent_node_id = "ns=3;s=85/0:Simulation"
 
-    # Get the parent node by NodeId
-    parent_node = client.get_node(parent_node_id)
-    print(device_node_id)
-    # Create an empty list to store the NodeIds
-    node_ids = []
-    telemetry_data={}
-    # Browse and read child nodes
-    for child_node in parent_node.get_children():
-        # Read the value of each child node
-        value = child_node.get_value()
-        print(f"Node Name: {child_node.get_browse_name().Name}, NodeId: {child_node.nodeid}, Value: {value}")
-        
-        # Append the NodeId to the list
-        node_ids.append(child_node.nodeid.to_string())
-    for node_id in node_ids:
-                node = client.get_node(node_id)
-                value = node.get_value()
-                #telemetry_data[node_id] = value
-                properties = node.get_properties()
-                if properties:
-                    for prop in properties:
-                        prop_name = prop.get_browse_name().to_string().split(":")[-1]
-                        prop_value = prop.get_value()
-                        telemetry_data[prop_name] = prop_value
+ 
 
-            # Print telemetry data to the console
-    print("Telemetry Data:", telemetry_data)
+    # Separate the list into two based on ns and i values
+
+    for node_id in device_node_id:
+
+        if "ns=" in node_id and ";i=" in node_id:
+
+            device_node_id_with_ns_i.append(node_id)
+
+        else:
+
+            device_node_id_without_ns_i.append(node_id)
+
+ 
+
+    # Fetch data for device_node_id_with_ns_i if needed
+
+    telemetry_data = {}
+
+    for node_id in device_node_id_with_ns_i:
+        value = node_id.get_value()
+        print(f"Node Name: {child_node.get_browse_name().Name}, NodeId: {node_id.nodeid}, Value: {value}")
+
+       
+
+ 
+
+        # Print the child node name, node ID, and its value
+
+        print(f"Child Node Name: {node.get_browse_name().Name}, NodeId: {node.nodeid}, Value: {value}")
+
+ 
+
+    # You can also fetch data for device_node_id_without_ns_i if needed
+
+ 
+
     # Disconnect from the OPC UA server
+
     client.disconnect()
+
     print("Disconnected!")
 
+ 
 
 except Exception as e:
+
     print(f"Error: {str(e)}")
+
+
 
 Connected!
 Device Node Name: Server, NodeId: FourByteNodeId(i=2253)
@@ -66,14 +108,4 @@ Device Node Name: WeatherIndicator, NodeId: FourByteNodeId(ns=3;i=1012)
 Device Node Name: Simulation, NodeId: StringNodeId(ns=3;s=85/0:Simulation)
 Device Node Name: StaticData, NodeId: StringNodeId(ns=5;s=StaticData)
 Device Node Name: MyObjects, NodeId: StringNodeId(ns=6;s=MyObjectsFolder)
-['i=2253', 'i=23470', 'ns=3;i=1011', 'ns=3;i=1012', 'ns=3;s=85/0:Simulation', 'ns=5;s=StaticData', 'ns=6;s=MyObjectsFolder']
-Node Name: Constant, NodeId: FourByteNodeId(ns=3;i=1001), Value: None
-Node Name: Counter, NodeId: FourByteNodeId(ns=3;i=1002), Value: 25
-Node Name: Random, NodeId: FourByteNodeId(ns=3;i=1003), Value: 0.2713308
-Node Name: Sawtooth, NodeId: FourByteNodeId(ns=3;i=1004), Value: -1.2
-Node Name: Sinusoid, NodeId: FourByteNodeId(ns=3;i=1005), Value: -0.8134733
-Node Name: Square, NodeId: FourByteNodeId(ns=3;i=1006), Value: 2.0
-Node Name: Triangle, NodeId: FourByteNodeId(ns=3;i=1007), Value: -0.5333333
-Telemetry Data: {'Humidity': 7.839163, 'Temperature': 39.19582}
-Disconnected!
-=======
+Error: 'str' object has no attribute 'get_value'
