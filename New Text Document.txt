@@ -1,6 +1,35 @@
 import time
-
+import csv
 from opcua import Client
+
+def read_node_ids_from_csv(file_path):
+    node_ids = []
+    try:
+        with open(file_path, 'r') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                node_ids.extend(row)
+        return node_ids
+
+    except Exception as e:
+        print(f"Error reading CSV file: {str(e)}")
+        return []
+
+def fetch_children_and_values(client, node_id):
+
+    try:
+
+        node = client.get_node(node_id)
+
+        for child_node in node.get_children():
+
+            value = child_node.get_value()
+
+            print(f"Node Name: {child_node.get_browse_name().Name}, NodeId: {child_node.nodeid}, Value: {value}")
+
+    except Exception as e:
+
+        print(f"Error fetching children and values: {str(e)}")
 
  
 
@@ -15,76 +44,123 @@ endpoint_url = "opc.tcp://MYTSL02946.lnties.com:53530/OPCUA/SimulationServer"
 client = Client(endpoint_url)
 
 device_node_id = []
-
-device_node_id_with_ns_i = []
-
-device_node_id_without_ns_i = []
-
- 
-
 try:
 
-    # Connect to the OPC UA server
+    # Check if a CSV file with node_ids exists
 
-    client.connect()
+    csv_file_path = "node_ids.csv"  # Change this to your CSV file path
 
-    print("Connected!")
-
- 
-
-    objects_node_id = "ns=0;i=85"
-
-    # Get the "Objects" folder node by NodeId
-
-    objects_node = client.get_node(objects_node_id)
+    node_ids_from_csv = read_node_ids_from_csv(csv_file_path)
 
  
 
-    # Browse and list all child nodes under the "Objects" folder
+    if node_ids_from_csv:
 
-    for child_node in objects_node.get_children():
+        device_node_id.extend(node_ids_from_csv)
 
-        print(f"Device Node Name: {child_node.get_browse_name().Name}, NodeId: {child_node.nodeid}")
-
-        device_node_id.append(child_node.nodeid.to_string())
+        print(f"Node IDs loaded from CSV: {device_node_id}")
 
  
 
-    # Separate the list into two based on ns and i values
+        # Connect to the OPC UA server
 
-    for node_id in device_node_id:
+        client.connect()
 
-        if "ns=" in node_id and ";i=" in node_id:
-
-            device_node_id_with_ns_i.append(node_id)
-
-        else:
-
-            device_node_id_without_ns_i.append(node_id)
+        print("Connected!")
 
  
 
-    # Fetch data for device_node_id_with_ns_i if needed
+        # Fetch children and values for nodes from the CSV
 
-    telemetry_data = {}
+        for node_id in device_node_id:
 
-    for node_id in device_node_id_with_ns_i:
-        node=client.get_node(node_id)
-        for child_node in node.get_children():
-            value = child_node.get_value()
-            print(f"Node Name: {child_node.get_browse_name().Name}, NodeId: {child_node.nodeid}, Value: {value}")
+            fetch_children_and_values(client, node_id)
 
  
 
-    # You can also fetch data for device_node_id_without_ns_i if needed
+        # Disconnect from the OPC UA server
 
- 
+        client.disconnect()
 
-    # Disconnect from the OPC UA server
+        print("Disconnected!")
 
-    client.disconnect()
+    else:
+        
+        device_node_id = []
 
-    print("Disconnected!")
+    device_node_id_with_ns_i = []
+
+    device_node_id_without_ns_i = []
+
+    
+
+    try:
+
+        # Connect to the OPC UA server
+
+        client.connect()
+
+        print("Connected!")
+
+    
+
+        objects_node_id = "ns=0;i=85"
+
+        # Get the "Objects" folder node by NodeId
+
+        objects_node = client.get_node(objects_node_id)
+
+    
+
+        # Browse and list all child nodes under the "Objects" folder
+
+        for child_node in objects_node.get_children():
+
+            print(f"Device Node Name: {child_node.get_browse_name().Name}, NodeId: {child_node.nodeid}")
+
+            device_node_id.append(child_node.nodeid.to_string())
+
+    
+
+        # Separate the list into two based on ns and i values
+
+        for node_id in device_node_id:
+
+            if "ns=" in node_id and ";i=" in node_id:
+
+                device_node_id_with_ns_i.append(node_id)
+
+            else:
+
+                device_node_id_without_ns_i.append(node_id)
+
+    
+
+        # Fetch data for device_node_id_with_ns_i if needed
+
+        telemetry_data = {}
+
+        for node_id in device_node_id_with_ns_i:
+            node=client.get_node(node_id)
+            for child_node in node.get_children():
+                value = child_node.get_value()
+                print(f"Node Name: {child_node.get_browse_name().Name}, NodeId: {child_node.nodeid}, Value: {value}")
+
+    
+
+        # You can also fetch data for device_node_id_without_ns_i if needed
+
+    
+
+        # Disconnect from the OPC UA server
+
+        client.disconnect()
+
+        print("Disconnected!")
+    
+    except Exception as e:
+
+        print(f"Error: {str(e)}")
 
  
 
