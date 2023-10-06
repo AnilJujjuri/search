@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import time
 from opcua import Client
 
@@ -76,4 +76,3 @@ Node Name: Square, NodeId: FourByteNodeId(ns=3;i=1006), Value: 2.0
 Node Name: Triangle, NodeId: FourByteNodeId(ns=3;i=1007), Value: -0.5333333
 Telemetry Data: {'Humidity': 7.839163, 'Temperature': 39.19582}
 Disconnected!
-=======
