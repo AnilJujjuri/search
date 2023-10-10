@@ -1,2 +1,174 @@
+<<<<<<< HEAD
 twin: {'desired': {'$version': 31, 'devices': {'d13bc22ced020fc40a0da74e0dfb6135': {'connection': {'ipAddress': '3.86.56.32', 'port': '2109', 'slaveId': '1'}, 'id': 'd13bc22ced020fc40a0da74e0dfb6135', 'interval': '100', 'signals': {'energy': {'address': '0', 'interval': '1000', 'length': '1', 'name': 
 'energy', 'unitId': '1'}, 'voltage': {'address': '1', 'interval': '1000', 'length': '1', 'name': 'voltage', 'unitId': '1'}}, 'thingId': 'b025f5ef67d5f96307fa89340116d656', 'type': 'modbustcp'}}}, 'reported': {'$version': 1}}
+=======
+import time
+import csv
+from opcua import Client
+
+def read_node_ids_from_csv(file_path):
+    node_ids = []
+    try:
+        with open(file_path, 'r') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                node_ids.extend(row)
+        return node_ids
+
+    except Exception as e:
+        print(f"Error reading CSV file: {str(e)}")
+        return []
+
+def fetch_children_and_values(client, node_id):
+
+    try:
+
+        node = client.get_node(node_id)
+
+        for child_node in node.get_children():
+
+            value = child_node.get_value()
+
+            print(f"Node Name: {child_node.get_browse_name().Name}, NodeId: {child_node.nodeid}, Value: {value}")
+
+    except Exception as e:
+
+        print(f"Error fetching children and values: {str(e)}")
+
+ 
+
+# OPC UA connection settings
+
+endpoint_url = "opc.tcp://MYTSL02946.lnties.com:53530/OPCUA/SimulationServer"
+
+ 
+
+# Create OPC UA client
+
+client = Client(endpoint_url)
+
+device_node_id = []
+try:
+
+    # Check if a CSV file with node_ids exists
+
+    csv_file_path = "node_ids.csv"  # Change this to your CSV file path
+
+    node_ids_from_csv = read_node_ids_from_csv(csv_file_path)
+
+ 
+
+    if node_ids_from_csv:
+
+        device_node_id.extend(node_ids_from_csv)
+
+        print(f"Node IDs loaded from CSV: {device_node_id}")
+
+ 
+
+        # Connect to the OPC UA server
+
+        client.connect()
+
+        print("Connected!")
+
+ 
+
+        # Fetch children and values for nodes from the CSV
+
+        for node_id in device_node_id:
+
+            fetch_children_and_values(client, node_id)
+
+ 
+
+        # Disconnect from the OPC UA server
+
+        client.disconnect()
+
+        print("Disconnected!")
+
+    else:
+        
+        device_node_id = []
+
+    device_node_id_with_ns_i = []
+
+    device_node_id_without_ns_i = []
+
+    
+
+    try:
+
+        # Connect to the OPC UA server
+
+        client.connect()
+
+        print("Connected!")
+
+    
+
+        objects_node_id = "ns=0;i=85"
+
+        # Get the "Objects" folder node by NodeId
+
+        objects_node = client.get_node(objects_node_id)
+
+    
+
+        # Browse and list all child nodes under the "Objects" folder
+
+        for child_node in objects_node.get_children():
+
+            print(f"Device Node Name: {child_node.get_browse_name().Name}, NodeId: {child_node.nodeid}")
+
+            device_node_id.append(child_node.nodeid.to_string())
+
+    
+
+        # Separate the list into two based on ns and i values
+
+        for node_id in device_node_id:
+
+            if "ns=" in node_id and ";i=" in node_id:
+
+                device_node_id_with_ns_i.append(node_id)
+
+            else:
+
+                device_node_id_without_ns_i.append(node_id)
+
+    
+
+        # Fetch data for device_node_id_with_ns_i if needed
+
+        telemetry_data = {}
+
+        for node_id in device_node_id_with_ns_i:
+            node=client.get_node(node_id)
+            for child_node in node.get_children():
+                value = child_node.get_value()
+                print(f"Node Name: {child_node.get_browse_name().Name}, NodeId: {child_node.nodeid}, Value: {value}")
+
+    
+
+        # You can also fetch data for device_node_id_without_ns_i if needed
+
+    
+
+        # Disconnect from the OPC UA server
+
+        client.disconnect()
+
+        print("Disconnected!")
+    
+    except Exception as e:
+
+        print(f"Error: {str(e)}")
+
+ 
+
+except Exception as e:
+
+    print(f"Error: {str(e)}")
+>>>>>>> c406e6ed82ac5df6bbd41b724b6548d5ef3e2b52
